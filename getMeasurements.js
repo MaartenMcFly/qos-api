@@ -13,10 +13,10 @@ mongoose.connection.once('connected', function() {
 	console.log("Connected to database.");
 });
 
-function insertMeasurement(p) {
+function insertMeasurement(p, callback) {
 	bs.getBlobToText(azureConnect.storageContainer, p.blobName, function(err, blobContent, blob) {
 		a = blobContent.split("\n");
-	 	a.splice(0, a.length - 1).map(function (t) {
+	 	async.forEach(a.splice(0, a.length - 1), function (t, cb) {
 			var q = JSON.parse(t);
 			if (q.availability[0].testName) {
 				var m = new Measurement();
@@ -24,15 +24,24 @@ function insertMeasurement(p) {
 				m.testTimestamp = q.availability[0].testTimestamp;
 				m.testDuration = q.availability[0].durationMetric.value / 10000000;
 				m.save(function (err) {
-					if (err)
+					if (err) {
 						console.error(err);
-					else {
+						cb();
+					} else {
 						p.isUploaded = true;
-						p.save();
+						p.save(function (err) {
+							if (err) 
+								console.log(err);							cb();
+						});
 					}
 				});
 			}
+			
+		}, function (err) {
+			if (err)
+				console.log(err);
 		});
+		callback();
 	});
 }
 
@@ -41,14 +50,11 @@ query.exec(function (err, props) {
 	if (err)
 		console.error(err);
 	else {
-		async.forEachLimit(props, 200, function(prop, callback) {
-			//props.map(function(prop) {insertMeasurement(prop);});
-			insertMeasurement(prop);
-			async.setImmediate(function() {
-				callback(null);
-			});
+		async.forEach(props, function(prop, callback) {
+			insertMeasurement(prop, callback);
 		}, function (err) {
 			if (err) {return next(err);}
+			process.exit(0);
 		});
 	}
 });

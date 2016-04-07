@@ -2,7 +2,6 @@ var azureConnect = require(__dirname + '/AZURE');
 var storageContainer = 'appsinsightcontainer'
 var azure = require('azure-storage');
 var bs = azure.createBlobService(azureConnect.storageAccount, azureConnect.storageAccessKey);
-var async = require("async");
 var mongoose = require('mongoose');
 var options = { server: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 30000 } }, 
                 replset: { socketOptions: { keepAlive: 300000, connectTimeoutMS : 30000 } } };
@@ -10,6 +9,7 @@ var options = { server: { socketOptions: { keepAlive: 300000, connectTimeoutMS: 
 var MeasurementProperties = require(__dirname + '/models/measurementproperties');
 var connectString = 'mongodb://measurementsAdmin:LudHaf97!@ds013250.mlab.com:13250/fluxable?authMechanism=SCRAM-SHA-1';
 //var connectString = 'mongodb://measurementsAdmin:LudHaf97!@52.58.21.162:27000/measurements?authMechanism=SCRAM-SHA-1';
+var async = require('async');
 
 var myBlobs = [];
 var i = 0;
@@ -55,10 +55,18 @@ function writeBlobProperties() {
 			createMeasurementProperties(b.name, b.properties["last-modified"], callback);
 		else
 			callback();
+<<<<<<< HEAD
 	}, function (err) {
 		if (err) 
 			console.log(err);
 	//process.exit(0);
+=======
+	}, function(err) {
+		if (err) {
+			//return next(err);
+		}
+		process.exit(0);
+>>>>>>> c0241487d52d4168d761b87228384555a5298874
 	});
 }
 

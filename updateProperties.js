@@ -2,10 +2,10 @@ var azureConnect = require(__dirname + '/AZURE');
 var storageContainer = 'appsinsightcontainer'
 var azure = require('azure-storage');
 var bs = azure.createBlobService(azureConnect.storageAccount, azureConnect.storageAccessKey);
-var async = require("async");
 var mongoose = require('mongoose');
 var MeasurementProperties = require(__dirname + '/models/measurementproperties');
 var connectString = 'mongodb://measurementsAdmin:LudHaf97!@52.58.21.162:27000/measurements?authMechanism=SCRAM-SHA-1';
+var async = require('async');
 
 var myBlobs = [];
 var i = 0;
@@ -30,7 +30,7 @@ function download(err, token) {
 	});
 }
 
-function createMeasurementProperties(blobName, testTimestamp) {
+function createMeasurementProperties(blobName, testTimestamp, callback) {
         var m = new MeasurementProperties();
         m.blobName = blobName;
         m.testTimestamp = testTimestamp;
@@ -39,14 +39,22 @@ function createMeasurementProperties(blobName, testTimestamp) {
                 {
                         console.log(err);
                 }
+		callback();
         });
         m = null;
 }
 
 function writeBlobProperties() {
-	myBlobs.forEach(function(b) {
+	async.forEach(myBlobs, function(b, callback) {
 		if (Date.parse(b.properties["last-modified"]) > timeStamp.getTime()) 
-			createMeasurementProperties(b.name, b.properties["last-modified"]);
+			createMeasurementProperties(b.name, b.properties["last-modified"], callback);
+		else
+			callback();
+	}, function(err) {
+		if (err) {
+			//return next(err);
+		}
+		process.exit(0);
 	});
 }
 
